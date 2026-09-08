@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><meta name="app-version" content="15.0.0">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><meta name="app-version" content="16.0.0">
 <title>Угадай мелодию</title>
 <style>
 :root{--bg:#090a0e;--card:#12141b;--line:#30343f;--text:#f7f7f8;--muted:#a6a8b1;--red:#e21b2d;--green:#27c46a;--gold:#ffc928}
@@ -9,13 +9,48 @@
 @media(max-width:800px){.host-grid{grid-template-columns:1fr}.board{grid-template-columns:repeat(3,1fr)}.scores{grid-template-columns:repeat(2,1fr)}.logo{font-size:24px}.upload-item{grid-template-columns:55px 1fr}.upload-item button{grid-column:2}}
 
 .prep-shell{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:14px;margin-top:18px}.prep-table-card{min-width:0}.prep-grid{min-width:0;grid-template-columns:84px repeat(5,minmax(150px,1fr));gap:8px}.prep-cell{min-height:118px;padding:10px;cursor:pointer;transition:.12s}.prep-cell:hover{border-color:#596171;transform:translateY(-1px)}.prep-cell.selected{border-color:#fff;box-shadow:0 0 0 2px #ffffff18}.prep-cell.ready{background:linear-gradient(180deg,#12251b,#121a16)}.prep-cell.missing{background:#15161c}.prep-cell .song-mini{font-weight:800;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:7px 0;color:#f0f1f3}.prep-status{font-size:12px;font-weight:800}.prep-editor{position:sticky;top:14px;height:max-content}.prep-editor h3{margin:0 0 8px}.editor-value{font-size:26px;font-weight:900}.editor-meta{margin:5px 0 12px}.editor-field{display:grid;gap:6px;margin:10px 0}.editor-field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0e1015;color:#fff}.editor-actions{display:flex;flex-wrap:wrap;gap:8px}.preview-status{min-height:18px;margin-top:8px}.prep-progress{font-weight:900}.prep-hint{margin-top:8px}.cat-head-label{font-size:12px;color:var(--muted);text-align:center;margin-bottom:6px}@media(max-width:1000px){.prep-shell{grid-template-columns:1fr}.prep-editor{position:static}.prep-grid{grid-template-columns:70px repeat(5,minmax(145px,1fr));overflow:auto}}
+
+/* V16 — удобная подготовка 5×5 */
+.prep-shell{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start;margin-top:18px;width:100%}
+.prep-table-card{min-width:0;width:100%}
+.prep-grid{display:grid;grid-template-columns:58px repeat(5,minmax(0,1fr));gap:7px;width:100%;min-width:0}
+.prep-corner,.prep-head,.prep-value,.prep-cell{min-width:0;border:1px solid var(--line);border-radius:12px}
+.prep-corner{display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--muted);padding:8px}
+.prep-head{background:#1b1e27;padding:8px}
+.prep-head .cat-input{width:100%;padding:9px 7px;font-size:14px}
+.prep-head .cat-head-label{margin-top:5px;font-size:10px}
+.prep-value{display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;background:#1b1e27;padding:8px}
+.prep-cell{min-height:116px;padding:8px;display:flex;flex-direction:column;gap:6px;cursor:pointer;transition:.12s;background:#15161c}
+.prep-cell:hover{border-color:#666f7e;transform:translateY(-1px)}
+.prep-cell.selected{border-color:#fff;box-shadow:0 0 0 2px #ffffff18}
+.prep-cell.ready{background:linear-gradient(180deg,#102319,#14191a)}
+.prep-cell.missing{background:#15161c}
+.prep-cell-top{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.prep-cell-top b{font-size:18px}
+.prep-cell .song-mini{font-size:13px;font-weight:800;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:2px 0;color:#f0f1f3;min-height:31px}
+.prep-cell .small{font-size:11px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prep-status{font-size:10px;font-weight:900;white-space:nowrap}
+.prep-editor{position:sticky;top:14px;width:100%;height:max-content}
+.prep-editor .card{width:100%}
+.editor-field input{font-size:15px}
+.editor-actions{display:grid;grid-template-columns:1fr;gap:8px}
+.editor-actions button{width:100%}
+.prep-progress{margin-left:4px}
+@media(max-width:1050px){
+  .prep-shell{grid-template-columns:1fr}
+  .prep-editor{position:static}
+}
+@media(max-width:760px){
+  .prep-grid{min-width:720px}
+  .prep-table-card{overflow-x:auto}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body><div id="app" class="wrap"></div>
 <script>
-const APP_VERSION="15.0.0";
+const APP_VERSION="16.0.0";
 (async function autoUpdate(){
   try{
     const res=await fetch("./version.json?ts="+Date.now(),{cache:"no-store"});
@@ -59,10 +94,16 @@ function preparationView(g){
  const cats=Array.from({length:5},(_,i)=>questions[i]?.category||defaultCats[i]);
  const count=questions.filter(q=>q.audio_url).length;
  shell(`<div class="top"><div><div class="logo">🎙 Подготовка игры</div><div class="muted">Код комнаты: <b class="code" style="font-size:20px">${g.code}</b></div></div><button id="back">← К игре</button></div>
- <div class="card"><h2>Подготовка «${esc(g.title)}»</h2><p class="muted">Нажмите на клетку, чтобы отредактировать песню. Категории задаются сверху. MP3 загружаются заранее и доступны для предпрослушивания.</p>
+ <div class="card"><h2>Подготовка «${esc(g.title)}»</h2><p class="muted">Выберите клетку — справа откроются её настройки. Категории редактируются сверху. MP3 загружаются заранее.</p>
  <div class="row"><button class="primary" id="start">▶ Начать игру</button><button id="saveAll">💾 Сохранить всё</button><button id="back2">← Вернуться к игре</button><span class="prep-progress" id="prepCounter">Готово: ${count}/25</span></div></div>
- <div class="prep-shell"><div class="card prep-table-card"><div class="prep-grid"><div class="prep-corner">Очки</div>${cats.map((c,i)=>`<div class="prep-head"><div class="cat-head-label">Категория ${i+1}</div><input class="cat-input" data-col="${i}" value="${esc(c)}" maxlength="40"></div>`).join("")}
- ${values.map((v,row)=>`<div class="prep-value">${v}</div>${Array.from({length:5},(_,col)=>{const q=questions[row*5+col];const ok=!!q.audio_url;const label=(q.title||q.answer||`Мелодия №${q.id}`);return `<div class="prep-cell ${ok?'ready':'missing'}" data-id="${q.id}"><div class="prep-cell-top"><b>${v}</b><span class="prep-status">${ok?'✅ MP3':'⚠ MP3'}</span></div><div class="song-mini">${esc(label)}</div><div class="small muted">${esc(q.answer||'Ответ не указан')}</div></div>`}).join("")}`).join("")}</div></div>
+ <div class="prep-shell">
+ <div class="card prep-table-card">
+  <div class="prep-grid">
+   <div class="prep-corner">Очки</div>
+   ${cats.map((c,i)=>`<div class="prep-head"><input class="cat-input" data-col="${i}" value="${esc(c)}" maxlength="40"><div class="cat-head-label">Категория ${i+1}</div></div>`).join("")}
+   ${values.map((v,row)=>`<div class="prep-value">${v}</div>${Array.from({length:5},(_,col)=>{const q=questions[row*5+col];const ok=!!q.audio_url;const label=(q.title||q.answer||`Мелодия №${q.id}`);return `<div class="prep-cell ${ok?'ready':'missing'}" data-id="${q.id}"><div class="prep-cell-top"><b>${v}</b><span class="prep-status">${ok?'✅ MP3':'⚠ MP3'}</span></div><div class="song-mini">${esc(label)}</div><div class="small muted">${esc(q.answer||'Ответ не указан')}</div></div>`}).join("")}`).join("")}
+  </div>
+ </div>
  <div class="card prep-editor"><h3 id="editorTitle">🎵 Выберите мелодию</h3><div id="editorEmpty" class="muted">Нажмите любую клетку слева.</div><div id="editorForm" class="hidden"><div class="editor-value" id="editorValue"></div><div class="editor-meta muted" id="editorCategory"></div><label class="editor-field"><span>Исполнитель — название</span><input id="editorTitleInput" placeholder="Например: Руки Вверх! — Крошка моя"></label><label class="editor-field"><span>Ответ ведущего</span><input id="editorAnswerInput" placeholder="Какой ответ засчитываем"></label><input id="editorFile" type="file" accept="audio/mpeg,audio/mp3,.mp3" style="display:none"><div class="editor-actions"><button id="editorUpload" class="primary">⬆ Загрузить MP3</button><button id="editorPreview" disabled>▶ Предпрослушать 10 сек</button><button id="editorSave">💾 Сохранить</button></div><div id="editorMp3" class="small muted"></div><div id="previewStatus" class="small preview-status"></div></div></div></div>`);
 
  let selectedId=null; let previewAudio=null; let previewTimer=null;
