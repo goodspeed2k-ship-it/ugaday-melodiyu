@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><meta name="app-version" content="14.0.0">
 <title>Угадай мелодию</title>
 <style>
 :root{--bg:#090a0e;--card:#12141b;--line:#30343f;--text:#f7f7f8;--muted:#a6a8b1;--red:#e21b2d;--green:#27c46a;--gold:#ffc928}
@@ -12,6 +12,21 @@
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body><div id="app" class="wrap"></div>
+<script>
+const APP_VERSION="14.0.0";
+(async function autoUpdate(){
+  try{
+    const res=await fetch("./version.json?ts="+Date.now(),{cache:"no-store"});
+    if(!res.ok)return;
+    const remote=await res.json();
+    if(remote.version && remote.version!==APP_VERSION && !new URLSearchParams(location.search).has("v")){
+      const url=new URL(location.href);
+      url.searchParams.set("v",remote.version);
+      location.replace(url.toString());
+    }
+  }catch(e){}
+})();
+</script>
 <script>
 const CONFIG={url:"https://rplawiqtrscavsvehtua.supabase.co",key:"sb_publishable__D2sRKa4baHynamcd-MQoQ_Tb-pRiEx"};
 const configured=!CONFIG.url.startsWith("PASTE_")&&!CONFIG.key.startsWith("PASTE_");
