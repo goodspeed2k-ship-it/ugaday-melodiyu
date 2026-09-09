@@ -1,1 +1,1 @@
-{"version":"34.0.0"}
+{"version":"35.0.0","build":"2026-09-09","notes":"Fix Song-in-Bag keep behavior: owner remains eligible to buzz; local test stand mirrors production logic."}
