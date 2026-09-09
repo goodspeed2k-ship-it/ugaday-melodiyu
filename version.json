@@ -1,1 +1,1 @@
-{"version":"35.0.0","build":"2026-09-09","notes":"Fix Song-in-Bag keep behavior: owner remains eligible to buzz; local test stand mirrors production logic."}
+{"version":"36.0.0","build":"2026-09-09","notes":"Robust Song-in-Bag keep: numeric team IDs, owner STOP active, clear keep status; test stand mirrors production."}
