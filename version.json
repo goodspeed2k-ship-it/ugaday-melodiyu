@@ -1,1 +1,1 @@
-{"version":"36.0.0","build":"2026-09-09","notes":"Robust Song-in-Bag keep: numeric team IDs, owner STOP active, clear keep status; test stand mirrors production."}
+{"version":"38.0.0","build":"2026-09-09","notes":"APOZH: automatic reverse generation from uploaded MP3; reverse upload/playback retained; editor updated."}
