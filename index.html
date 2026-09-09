@@ -99,7 +99,7 @@ function durationLabel(k){return k==='fast'?'⚡ Быстрая · 15+15 мин'
 function hostSetup(){
  shell(`<div class="top"><div><div class="logo">🎙 Угадай мелодию</div><div class="muted">Игры и подготовка</div></div></div>
  <div class="card join"><h2>Создать новую игру</h2><p class="muted">Создай игру сейчас, подготовь её хоть за неделю и возвращайся к ней позже.</p>
- <label>Организатор</label><input id="organizerKey" placeholder="KonstantinD" value="${esc(state.organizerKey)}"><p class="muted small">Один и тот же идентификатор даёт доступ к твоим играм с любого компьютера и браузера.</p>
+ <label>Организатор</label><input id="organizerKey" placeholder="KonstantinD" value="${esc(state.organizerKey||'KonstantinD')}"><p class="muted small">Твой постоянный организатор: <b>KonstantinD</b>. Одинаковый организатор даёт доступ к играм с любого компьютера и браузера.</p>
  <input id="title" placeholder="Название игры" value="Угадай мелодию"><label>Количество команд</label><input id="teams" type="number" min="2" max="6" value="3"><div id="teamNames"></div>
  <label>Продолжительность</label><select id="duration" class="setup-select"><option value="fast">⚡ Быстрая — 15 + 15 минут</option><option value="standard" selected>🎵 Стандарт — 25 + 25 минут</option><option value="long">🍻 Длинная — 35 + 35 минут</option></select>
  <button class="primary" id="create">Создать игру</button><p id="err" class="muted"></p></div>
@@ -113,7 +113,39 @@ function getRememberedGames(){try{return JSON.parse(localStorage.getItem('ugaday
 function rememberGame(id,code,title=''){const sid=String(id);const arr=getRememberedGames().filter(x=>String(x.id)!==sid);arr.unshift({id:sid,code,title});localStorage.setItem('ugaday-games',JSON.stringify(arr.slice(0,30)))}
 function forgetGame(id){const sid=String(id);const arr=getRememberedGames().filter(x=>String(x.id)!==sid);localStorage.setItem('ugaday-games',JSON.stringify(arr))}
 function gameDateLabel(v){if(!v)return'';try{return new Date(v).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch(e){return''}}
-async function renderGameLibrary(){const box=document.querySelector('#myGames');if(!box)return;box.innerHTML='<div class="library-empty">Загружаю игры организатора…</div>';const key=(state.organizerKey||'KonstantinD').trim()||'KonstantinD';localStorage.setItem('ugaday-organizer-key',key);let rows=[];let serverError='';try{const {data,error}=await sb.from('games').select('id,code,title,status,created_at,updated_at,questions,teams,game_settings').filter('game_settings->>organizerKey','eq',key).neq('status','deleted').order('updated_at',{ascending:false,nullsFirst:false}).limit(100);if(error)throw error;rows=data||[]}catch(e){serverError=e?.message||String(e);const remembered=getRememberedGames();if(remembered.length){try{const {data}=await sb.from('games').select('id,code,title,status,created_at,updated_at,questions,teams,game_settings').in('id',remembered.map(x=>x.id));rows=(data||[]).filter(g=>g.status!=='deleted')}catch(_){}}}if(!rows.length){box.innerHTML=`<div class="library-empty">Нет игр организатора <b>${esc(key)}</b>.${serverError?`<div class="muted small" style="margin-top:8px">Не удалось загрузить серверный список: ${esc(serverError)}</div>`:''}</div>`;return}box.innerHTML=`<div class="muted small" style="margin-bottom:10px">👤 Организатор: <b>${esc(key)}</b> · этот список загружается с сервера и доступен на любом устройстве.</div>`+rows.map(g=>{const qs=g.questions||[];const ready=qs.filter(q=>q.audio_url||q.reverse_audio_url).length;const imgs=qs.filter(q=>q.image_url).length;return `<div class="game-library-row"><div class="game-library-meta"><div class="game-library-title">${esc(g.title||'Без названия')}</div><div class="game-library-sub">Код: <b>${esc(g.code)}</b> · ${gameDateLabel(g.updated_at||g.created_at)} · 🎵 ${ready}/50 · 🖼 ${imgs} · ☁ сохранено</div></div><div class="game-library-actions"><button class="primary" data-open-game="${esc(g.code)}">Продолжить</button><button class="soft" data-duplicate-game="${esc(g.id)}">Дублировать</button><button class="danger-outline" data-delete-game="${esc(g.id)}">Удалить</button></div></div>`}).join('');box.querySelectorAll('[data-open-game]').forEach(b=>b.onclick=()=>location.search='?host='+encodeURIComponent(b.dataset.openGame));box.querySelectorAll('[data-duplicate-game]').forEach(b=>b.onclick=()=>duplicateGame(b.dataset.duplicateGame));box.querySelectorAll('[data-delete-game]').forEach(b=>b.onclick=()=>deleteGame(b.dataset.deleteGame));}
+async function renderGameLibrary(){
+ const box=document.querySelector('#myGames');
+ if(!box)return;
+ box.innerHTML='<div class="library-empty">Загружаю игры организатора…</div>';
+ const key=(state.organizerKey||'KonstantinD').trim()||'KonstantinD';
+ state.organizerKey=key;
+ localStorage.setItem('ugaday-organizer-key',key);
+ let rows=[];let serverError='';
+ try{
+   const {data,error}=await sb.from('games')
+     .select('id,code,title,status,created_at,questions,teams,game_settings')
+     .filter('game_settings->>organizerKey','eq',key)
+     .neq('status','deleted')
+     .order('created_at',{ascending:false})
+     .limit(100);
+   if(error)throw error;
+   rows=data||[];
+ }catch(e){serverError=e?.message||String(e)}
+ if(!rows.length){
+   box.innerHTML=`<div class="library-empty">Нет сохранённых игр организатора <b>${esc(key)}</b>.${serverError?`<div class="muted small" style="margin-top:8px">Не удалось загрузить серверный список: ${esc(serverError)}</div>`:''}<div class="muted small" style="margin-top:8px">Новые игры сохраняются на сервере автоматически. Этот список доступен с любого компьютера и браузера.</div></div>`;
+   return;
+ }
+ box.innerHTML=`<div class="muted small" style="margin-bottom:10px">👤 Организатор: <b>${esc(key)}</b> · список загружен с сервера и доступен на любом устройстве.</div>`+
+ rows.map(g=>{
+   const qs=g.questions||[];
+   const ready=qs.filter(q=>q.audio_url||q.reverse_audio_url).length;
+   const imgs=qs.filter(q=>q.image_url).length;
+   return `<div class="game-library-row"><div class="game-library-meta"><div class="game-library-title">${esc(g.title||'Без названия')}</div><div class="game-library-sub">Код: <b>${esc(g.code)}</b> · ${gameDateLabel(g.created_at)} · 🎵 ${ready}/50 · 🖼 ${imgs} · ☁ сохранено на сервере</div></div><div class="game-library-actions"><button class="primary" data-open-game="${esc(g.code)}">Продолжить</button><button class="soft" data-duplicate-game="${esc(g.id)}">Дублировать</button><button class="danger-outline" data-delete-game="${esc(g.id)}">Удалить</button></div></div>`
+ }).join('');
+ box.querySelectorAll('[data-open-game]').forEach(b=>b.onclick=()=>location.search='?host='+encodeURIComponent(b.dataset.openGame));
+ box.querySelectorAll('[data-duplicate-game]').forEach(b=>b.onclick=()=>duplicateGame(b.dataset.duplicateGame));
+ box.querySelectorAll('[data-delete-game]').forEach(b=>b.onclick=()=>deleteGame(b.dataset.deleteGame));
+}
 async function deleteGame(id){const ok=confirm('Удалить эту игру из списка? Она сразу исчезнет из раздела «Мои подготовленные игры».');if(!ok)return;const sid=String(id);forgetGame(sid);if(state.game?.id===id||String(state.game?.id)===sid){state.game=null;location.search='';return}renderGameLibrary();let serverNote='';try{const hard=await sb.from('games').delete().eq('id',sid);if(hard.error){const soft=await sb.from('games').update({status:'deleted'}).eq('id',sid);if(soft.error)serverNote=soft.error.message}}catch(e){serverNote=e?.message||String(e)}if(serverNote){const box=document.querySelector('#myGames');if(box){const n=document.createElement('div');n.className='muted small';n.style.marginTop='8px';n.textContent='✅ Игра убрана из этого списка. Серверная копия пока не удалена: '+serverNote;box.prepend(n)}}}
 async function duplicateGame(id){const {data:g,error}=await sb.from('games').select('*').eq('id',id).single();if(error){alert('Не удалось открыть игру: '+error.message);return}const code=await uniqueGameCode();const questions=(g.questions||[]).map(q=>({...q,used:false}));const teams=(g.teams||[]).map(t=>({...t,score:0,players:[]}));const base={...(g.game_settings||{})};base.round=1;base.roundStartedAt=null;base.roundActive=false;base.roundEnded=false;base.final=false;base.turnTeamId=null;base.auction=null;base.organizerKey=(base.organizerKey||state.organizerKey||'KonstantinD');const fields={code,title:(g.title||'Угадай мелодию')+' — копия',teams,questions,status:'lobby',blocked_team_ids:[],game_settings:base,current_question_id:null,locked_team_id:null,target_team_id:null,undo_state:null};const {data,error:ins}=await sb.from('games').insert(fields).select().single();if(ins){alert('Не удалось создать копию: '+ins.message);return}rememberGame(data.id,data.code,data.title);location.search='?host='+data.code}
 async function uniqueGameCode(){for(let i=0;i<10;i++){const c=Math.random().toString(36).slice(2,6).toUpperCase();const {data,error}=await sb.from('games').select('id').eq('code',c).maybeSingle();if(!error&&!data)return c}return Math.random().toString(36).slice(2,8).toUpperCase()}
